@@ -19,7 +19,7 @@ library(lubridate)
 library(ggplot2)
 
 # ---------------- PASO 2: CARGA ----------------
-ruta <- "C:/Users/LENOVO/Desktop/Trabajos de Econometria/Mexican Bank Oligopoly/BASE DE DATOS MODELO.xlsx"
+ruta <- "RUTA DE LA BASE DE DATOS: BASE DE DATOS DEL MODELO.xlsm"
 datos_raw <- read_excel(ruta, sheet = "Data")
 
 # ---------------- PASO 3: LIMPIEZA ----------------
