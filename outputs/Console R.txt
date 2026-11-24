@@ -1,0 +1,832 @@
+R version 4.6.2 (2026-10-29 ucrt) -- "Diversified Portfolio"
+Copyright (C) 2026 The R Foundation for Statistical Computing
+Platform: x86_64-w64-mingw32/x64
+
+R es un software libre y viene sin GARANTIA ALGUNA.
+Usted puede redistribuirlo bajo ciertas circunstancias.
+Escriba 'license()' o 'licence()' para detalles de distribucion.
+
+R es un proyecto colaborativo con muchos contribuyentes.
+Escriba 'contributors()' para obtener más información y
+'citation()' para saber cómo citar R o paquetes de R en publicaciones.
+
+Escriba 'demo()' para demostraciones, 'help()' para el sistema on-line de ayuda,
+o 'help.start()' para abrir el sistema de ayuda HTML con su navegador.
+Escriba 'q()' para salir de R.
+
+[Workspace loaded from C:/Users/LENOVO/Desktop/Trabajos de Econometria/Mexican Bank Oligopoly/.RData]
+
+> View(modelo_ecm)
+> # ---------------- PASO 1: PAQUETES ----------------
+> library(readxl)
+> library(dplyr)
+
+Adjuntando el paquete: ‘dplyr’
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+> library(zoo)
+
+Adjuntando el paquete: ‘zoo’
+
+The following objects are masked from ‘package:base’:
+
+    as.Date, as.Date.numeric
+> library(lmtest)
+> library(sandwich)
+> library(car)
+Cargando paquete requerido: carData
+
+Adjuntando el paquete: ‘car’
+
+The following object is masked from ‘package:dplyr’:
+
+    recode
+> library(tseries)
+Registered S3 method overwritten by 'quantmod':
+  method            from
+  as.zoo.data.frame zoo 
+
+    ‘tseries’ version: 0.10-63
+
+    ‘tseries’ is a package for time series analysis and
+    computational finance.
+
+    See ‘library(help="tseries")’ for details.
+> library(strucchange)
+> library(urca)
+> library(lubridate)
+
+Adjuntando el paquete: ‘lubridate’
+
+The following objects are masked from ‘package:base’:
+
+    date, intersect, setdiff, union
+> library(ggplot2)
+> # ---------------- PASO 2: CARGA ----------------
+> ruta <- "C:/Users/LENOVO/Desktop/Trabajos de Econometria/Mexican Bank Oligopoly/BASE DE DATOS MODELO.xlsx"
+> datos_raw <- read_excel(ruta, sheet = "Datos")
+Error: Sheet 'Datos' not found
+
+> # ---------------- PASO 3: LIMPIEZA ----------------
+> datos <- datos_raw %>%
++   rename(
++     PERIODO    = 1,
++     CARTERA    = 2,
++     FBKF       = 3,
++     CONCENT    = 4,
++     MARGEN_PAR = 5
++   ) %>%
++   mutate(
++     PERIODO = as.Date(PERIODO),
++     across(-PERIODO, ~ as.numeric(.))
++   ) %>%
++   filter(!is.na(PERIODO)) %>%
++   distinct(PERIODO, .keep_all = TRUE) %>%       # elimina duplicado 2026-08 con FORECAST
++   arrange(PERIODO) %>%
++   filter(PERIODO >= as.Date("2001-01-01")) %>%  # inicio del análisis
++   filter(!is.na(FBKF), !is.na(CARTERA),
++          !is.na(CONCENT), !is.na(MARGEN_PAR))
+Error: objeto 'datos_raw' no encontrado
+
+> # ---------------- PASO 3: LIMPIEZA ----------------
+> datos <- datos_raw %>%
++   rename(
++     PERIODO    = 1,
++     CARTERA    = 2,
++     FBKF       = 3,
++     CONCENT    = 4,
++     MARGEN_PAR = 5
++   ) %>%
++   mutate(
++     PERIODO = as.Date(PERIODO),
++     across(-PERIODO, ~ as.numeric(.))
++   ) %>%
++   filter(!is.na(PERIODO)) %>%
++   distinct(PERIODO, .keep_all = TRUE) %>%       # elimina duplicado 2026-08 con FORECAST
++   arrange(PERIODO) %>%
++   filter(PERIODO >= as.Date("2001-01-01")) %>%  # inicio del análisis
++   filter(!is.na(FBKF), !is.na(CARTERA),
++          !is.na(CONCENT), !is.na(MARGEN_PAR))
+Error: objeto 'datos_raw' no encontrado
+
+> # ---------------- PASO 2: CARGA ----------------
+> ruta <- "C:/Users/LENOVO/Desktop/Trabajos de Econometria/Mexican Bank Oligopoly/BASE DE DATOS MODELO.xlsx"
+> datos_raw <- read_excel(ruta, sheet = "Datos")
+Error: Sheet 'Datos' not found
+
+> # ---------------- PASO 2: CARGA ----------------
+> ruta <- "C:/Users/LENOVO/Desktop/Trabajos de Econometria/Mexican Bank Oligopoly/BASE DE DATOS MODELO.xlsx"
+> datos_raw <- read_excel(ruta, sheet = "Datos")
+Error: Sheet 'Datos' not found
+
+> # ---------------- PASO 2: CARGA ----------------
+> ruta <- "C:/Users/LENOVO/Desktop/Trabajos de Econometria/Mexican Bank Oligopoly/BASE DE DATOS MODELO.xlsx"
+> datos_raw <- read_excel(ruta, sheet = "Data")
+                                                             
+> # ---------------- PASO 3: LIMPIEZA ----------------
+> datos <- datos_raw %>%
++   rename(
++     PERIODO    = 1,
++     CARTERA    = 2,
++     FBKF       = 3,
++     CONCENT    = 4,
++     MARGEN_PAR = 5
++   ) %>%
++   mutate(
++     PERIODO = as.Date(PERIODO),
++     across(-PERIODO, ~ as.numeric(.))
++   ) %>%
++   filter(!is.na(PERIODO)) %>%
++   distinct(PERIODO, .keep_all = TRUE) %>%       # elimina duplicado 2026-08 con FORECAST
++   arrange(PERIODO) %>%
++   filter(PERIODO >= as.Date("2001-01-01")) %>%  # inicio del análisis
++   filter(!is.na(FBKF), !is.na(CARTERA),
++          !is.na(CONCENT), !is.na(MARGEN_PAR))
+> cat("\n=== RANGO FINAL ===\n")
+
+=== RANGO FINAL ===
+> cat("Desde:", format(min(datos$PERIODO)), "\n")
+Desde: 2001-01-01 
+> cat("Hasta:", format(max(datos$PERIODO)), "\n")
+Hasta: 2026-08-01 
+> cat("N observaciones:", nrow(datos), "\n")
+N observaciones: 308 
+> # ---------------- PASO 4: LOGS Y DIFERENCIAS ----------------
+> datos <- datos %>%
++   mutate(
++     ln_FBKF       = log(FBKF),
++     ln_CARTERA    = log(CARTERA),
++     ln_CONCENT    = log(CONCENT),
++     ln_MARGEN_PAR = log(MARGEN_PAR),
++     d_ln_FBKF       = c(NA, diff(ln_FBKF)),
++     d_ln_CARTERA    = c(NA, diff(ln_CARTERA)),
++     d_ln_CONCENT    = c(NA, diff(ln_CONCENT)),
++     d_ln_MARGEN_PAR = c(NA, diff(ln_MARGEN_PAR))
++   )
+> # ---------------- PASO 5: MODELO PRINCIPAL (2001–2026) ----------------
+> modelo <- lm(d_ln_FBKF ~ d_ln_CARTERA + d_ln_CONCENT + d_ln_MARGEN_PAR,
++              data = datos)
+> cat("\n=== MODELO PRINCIPAL: MCO EN DIFERENCIAS 2001–2026 ===\n")
+
+=== MODELO PRINCIPAL: MCO EN DIFERENCIAS 2001–2026 ===
+> print(summary(modelo))
+
+Call:
+lm(formula = d_ln_FBKF ~ d_ln_CARTERA + d_ln_CONCENT + d_ln_MARGEN_PAR, 
+    data = datos)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.271842 -0.005616  0.002648  0.011765  0.100975 
+
+Coefficients:
+                 Estimate Std. Error t value Pr(>|t|)    
+(Intercept)      0.001620   0.001608   1.008   0.3145    
+d_ln_CARTERA     0.152862   0.075149   2.034   0.0428 *  
+d_ln_CONCENT    -0.046023   0.140960  -0.326   0.7443    
+d_ln_MARGEN_PAR  0.013558   0.002120   6.396 6.04e-10 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.0277 on 303 degrees of freedom
+  (1 observation deleted due to missingness)
+Multiple R-squared:  0.1328,	Adjusted R-squared:  0.1243 
+F-statistic: 15.47 on 3 and 303 DF,  p-value: 2.171e-09
+
+> # ---------------- PASO 6: DIAGNÓSTICOS ----------------
+> cat("\n=== DIAGNÓSTICOS ===\n")
+
+=== DIAGNÓSTICOS ===
+> cat("N obs:", nobs(modelo), "\n")
+N obs: 307 
+> cat("R2 ajustado:", round(summary(modelo)$adj.r.squared, 4), "\n")
+R2 ajustado: 0.1243 
+> cat("\nBreusch-Pagan (heteroscedasticidad):\n");  print(bptest(modelo))
+
+Breusch-Pagan (heteroscedasticidad):
+
+	studentized Breusch-Pagan test
+
+data:  modelo
+BP = 30.937, df = 3, p-value = 8.766e-07
+
+> cat("\nDurbin-Watson (autocorrelación):\n");       print(dwtest(modelo))
+
+Durbin-Watson (autocorrelación):
+
+	Durbin-Watson test
+
+data:  modelo
+DW = 1.9236, p-value = 0.2496
+alternative hypothesis: true autocorrelation is greater than 0
+
+> cat("\nBreusch-Godfrey (4 rezagos):\n");           print(bgtest(modelo, order = 4))
+
+Breusch-Godfrey (4 rezagos):
+
+	Breusch-Godfrey test for serial correlation of order up
+	to 4
+
+data:  modelo
+LM test = 1.8125, df = 4, p-value = 0.7702
+
+> cat("\nShapiro-Wilk (normalidad):\n");             print(shapiro.test(residuals(modelo)))
+
+Shapiro-Wilk (normalidad):
+
+	Shapiro-Wilk normality test
+
+data:  residuals(modelo)
+W = 0.74292, p-value < 2.2e-16
+
+> cat("\nVIF (multicolinealidad):\n");               print(vif(modelo))
+
+VIF (multicolinealidad):
+   d_ln_CARTERA    d_ln_CONCENT d_ln_MARGEN_PAR 
+       1.002626        1.005845        1.007847 
+> # ---------------- PASO 7: NEWEY-WEST ----------------
+> cat("\n=== NEWEY-WEST (errores robustos) ===\n")
+
+=== NEWEY-WEST (errores robustos) ===
+> print(coeftest(modelo, vcov = NeweyWest(modelo, lag = 4, prewhite = FALSE)))
+
+t test of coefficients:
+
+                  Estimate Std. Error t value Pr(>|t|)   
+(Intercept)      0.0016198  0.0020938  0.7736   0.4397   
+d_ln_CARTERA     0.1528624  0.1432880  1.0668   0.2869   
+d_ln_CONCENT    -0.0460229  0.0914994 -0.5030   0.6153   
+d_ln_MARGEN_PAR  0.0135583  0.0050021  2.7105   0.0071 **
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+> # ---------------- PASO 8: ADF (orden de integración) ----------------
+> cat("\n=== ADF NIVELES ===\n")
+
+=== ADF NIVELES ===
+> for (v in c("ln_FBKF","ln_CARTERA","ln_CONCENT","ln_MARGEN_PAR")) {
++   cat("\n---", v, "---\n")
++   print(ur.df(datos[[v]], type = "drift", selectlags = "AIC"))
++ }
+
+--- ln_FBKF ---
+
+############################################################### 
+# Augmented Dickey-Fuller Test Unit Root / Cointegration Test # 
+############################################################### 
+
+The value of the test statistic is: -1.2672 1.6468 
+
+
+--- ln_CARTERA ---
+
+############################################################### 
+# Augmented Dickey-Fuller Test Unit Root / Cointegration Test # 
+############################################################### 
+
+The value of the test statistic is: -4.268 11.4428 
+
+
+--- ln_CONCENT ---
+
+############################################################### 
+# Augmented Dickey-Fuller Test Unit Root / Cointegration Test # 
+############################################################### 
+
+The value of the test statistic is: -0.4792 0.2123 
+
+
+--- ln_MARGEN_PAR ---
+
+############################################################### 
+# Augmented Dickey-Fuller Test Unit Root / Cointegration Test # 
+############################################################### 
+
+The value of the test statistic is: -10.1755 51.7911 
+
+> cat("\n=== ADF PRIMERAS DIFERENCIAS ===\n")
+
+=== ADF PRIMERAS DIFERENCIAS ===
+> for (v in c("d_ln_FBKF","d_ln_CARTERA","d_ln_CONCENT","d_ln_MARGEN_PAR")) {
++   cat("\n---", v, "---\n")
++   print(ur.df(na.omit(datos[[v]]), type = "drift", selectlags = "AIC"))
++ }
+
+--- d_ln_FBKF ---
+
+############################################################### 
+# Augmented Dickey-Fuller Test Unit Root / Cointegration Test # 
+############################################################### 
+
+The value of the test statistic is: -12.3721 76.5343 
+
+
+--- d_ln_CARTERA ---
+
+############################################################### 
+# Augmented Dickey-Fuller Test Unit Root / Cointegration Test # 
+############################################################### 
+
+The value of the test statistic is: -8.2423 33.9728 
+
+
+--- d_ln_CONCENT ---
+
+############################################################### 
+# Augmented Dickey-Fuller Test Unit Root / Cointegration Test # 
+############################################################### 
+
+The value of the test statistic is: -13.0974 85.7765 
+
+
+--- d_ln_MARGEN_PAR ---
+
+############################################################### 
+# Augmented Dickey-Fuller Test Unit Root / Cointegration Test # 
+############################################################### 
+
+The value of the test statistic is: -15.4691 119.6473 
+
+> # ---------------- PASO 9: COINTEGRACIÓN (Engle-Granger) ----------------
+> cat("\n=== ENGLE-GRANGER (residuos del MCO en niveles) ===\n")
+
+=== ENGLE-GRANGER (residuos del MCO en niveles) ===
+> modelo_niv <- lm(ln_FBKF ~ ln_CARTERA + ln_CONCENT + ln_MARGEN_PAR, data = datos)
+> print(ur.df(residuals(modelo_niv), type = "none", selectlags = "AIC"))
+
+############################################################### 
+# Augmented Dickey-Fuller Test Unit Root / Cointegration Test # 
+############################################################### 
+
+The value of the test statistic is: -1.9234 
+
+> # ---------------- PASO 10: CHOW (quiebre COVID 2020-03) ----------------
+> idx_covid <- which(datos$PERIODO == as.Date("2020-03-01"))
+> cat("\n=== CHOW 2020-03 (COVID) ===\n")
+
+=== CHOW 2020-03 (COVID) ===
+> print(sctest(d_ln_FBKF ~ d_ln_CARTERA + d_ln_CONCENT + d_ln_MARGEN_PAR,
++              data = datos, type = "Chow", point = idx_covid))
+
+	Chow test
+
+data:  d_ln_FBKF ~ d_ln_CARTERA + d_ln_CONCENT + d_ln_MARGEN_PAR
+F = 0.45837, p-value = 0.7663
+
+> # ---------------- PASO 11: ROBUSTEZ SIN COVID (2001–2019 + 2022–2026) ----------------
+> datos_sin_covid <- datos %>%
++   filter(PERIODO < as.Date("2020-01-01") | PERIODO > as.Date("2021-12-31"))
+> modelo_sin_covid <- lm(d_ln_FBKF ~ d_ln_CARTERA + d_ln_CONCENT + d_ln_MARGEN_PAR,
++                        data = datos_sin_covid)
+> cat("\n=== MODELO ROBUSTEZ: SIN COVID ===\n")
+
+=== MODELO ROBUSTEZ: SIN COVID ===
+> print(summary(modelo_sin_covid))
+
+Call:
+lm(formula = d_ln_FBKF ~ d_ln_CARTERA + d_ln_CONCENT + d_ln_MARGEN_PAR, 
+    data = datos_sin_covid)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.272005 -0.005400  0.002302  0.011200  0.103363 
+
+Coefficients:
+                 Estimate Std. Error t value Pr(>|t|)    
+(Intercept)      0.002156   0.001667   1.293    0.197    
+d_ln_CARTERA     0.117049   0.081213   1.441    0.151    
+d_ln_CONCENT    -0.017703   0.141355  -0.125    0.900    
+d_ln_MARGEN_PAR  0.014460   0.002188   6.609 1.95e-10 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.02741 on 279 degrees of freedom
+  (1 observation deleted due to missingness)
+Multiple R-squared:  0.144,	Adjusted R-squared:  0.1348 
+F-statistic: 15.65 on 3 and 279 DF,  p-value: 1.967e-09
+
+> cat("\nNewey-West sin COVID:\n")
+
+Newey-West sin COVID:
+> print(coeftest(modelo_sin_covid, vcov = NeweyWest(modelo_sin_covid, lag = 4, prewhite = FALSE)))
+
+t test of coefficients:
+
+                  Estimate Std. Error t value Pr(>|t|)   
+(Intercept)      0.0021556  0.0022107  0.9751 0.330365   
+d_ln_CARTERA     0.1170491  0.1687568  0.6936 0.488512   
+d_ln_CONCENT    -0.0177032  0.0871070 -0.2032 0.839099   
+d_ln_MARGEN_PAR  0.0144599  0.0053601  2.6977 0.007407 **
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+> # ---------------- PASO 12: ROBUSTEZ 2001–2016 CON DESGLOSE MARGEN vs COMISIONES ----------------
+> # (usando Hoja1, que tiene el desglose hasta 2016)
+> hoja1_raw <- read_excel(ruta, sheet = "Hoja1")
+New names:                                                   
+• `` -> `...3`
+• `` -> `...4`
+• `` -> `...5`
+• `` -> `...6`
+• `` -> `...9`
+• `` -> `...10`
+• `` -> `...11`
+• `` -> `...12`
+• `` -> `...13`
+• `` -> `...14`
+> hoja1 <- hoja1_raw %>%
++   slice(-(1:2)) %>%
++   setNames(c("PERIODO","CARTERA_CONS","CARTERA_EMP","RATIO_CARTERA",
++              "INEGI","ACTIVOS_TOT","ACTIVOS_5B","CONCENT_CALC",
++              "MF_ACUM","COM_COB_ACUM","MARGEN_ACUM","COM_PAG")) %>%
++   mutate(across(-PERIODO, ~ as.numeric(.))) %>%
++   mutate(PERIODO = as.Date(PERIODO)) %>%
++   filter(PERIODO >= as.Date("2001-01-01") & PERIODO <= as.Date("2016-09-30")) %>%
++   arrange(PERIODO) %>%
++   mutate(anio = year(PERIODO), mes = month(PERIODO)) %>%
++   group_by(anio) %>%
++   mutate(
++     MF_flow  = MF_ACUM      - lag(MF_ACUM,      default = 0),
++     COM_flow = COM_COB_ACUM - lag(COM_COB_ACUM, default = 0),
++     MF_q  = MF_flow  / ACTIVOS_TOT * 100,
++     COM_q = COM_flow / ACTIVOS_TOT * 100
++   ) %>%
++   ungroup()
+Error in `mutate()`:
+! Can't transform a data frame with missing names.
+Run `rlang::last_trace()` to see where the error occurred.
+
+> # Unir a datos (mensual) por PERIODO
+> datos_desg <- datos %>%
++   filter(PERIODO <= as.Date("2016-09-30")) %>%
++   left_join(
++     hoja1 %>% select(PERIODO, MF_q, COM_q),
++     by = "PERIODO"
++   ) %>%
++   filter(!is.na(MF_q), !is.na(COM_q)) %>%
++   mutate(
++     ln_MF  = log(pmax(MF_q,  0.01)),
++     ln_COM = log(pmax(COM_q, 0.01)),
++     d_ln_MF  = c(NA, diff(ln_MF)),
++     d_ln_COM = c(NA, diff(ln_COM))
++   )
+Error: objeto 'hoja1' no encontrado
+
+> # ---------------- PASO 12: ROBUSTEZ 2001–2016 CON DESGLOSE MARGEN vs COMISIONES ----------------
+> # Seleccionamos por POSICIÓN (A=1, H=8, K=11, L=12) para evitar conflictos
+> # con las columnas vacías de la hoja Hoja1.
+> hoja1_raw <- read_excel(ruta, sheet = "Hoja1", col_names = FALSE, skip = 2)
+New names:                                                                  
+• `` -> `...1`
+• `` -> `...2`
+• `` -> `...3`
+• `` -> `...4`
+• `` -> `...5`
+• `` -> `...6`
+• `` -> `...7`
+• `` -> `...8`
+• `` -> `...9`
+• `` -> `...10`
+• `` -> `...11`
+• `` -> `...12`
+• `` -> `...13`
+• `` -> `...14`
+> hoja1 <- hoja1_raw %>%
++   select(1, 8, 11, 12) %>%                       # A, H, K, L
++   setNames(c("PERIODO", "ACTIVOS_TOT", "MF_ACUM", "COM_COB_ACUM")) %>%
++   mutate(
++     PERIODO      = as.Date(as.numeric(PERIODO), origin = "1899-12-30"),
++     ACTIVOS_TOT  = as.numeric(ACTIVOS_TOT),
++     MF_ACUM      = as.numeric(MF_ACUM),
++     COM_COB_ACUM = as.numeric(COM_COB_ACUM)
++   ) %>%
++   filter(!is.na(PERIODO)) %>%
++   filter(PERIODO >= as.Date("2001-01-01") & PERIODO <= as.Date("2016-09-30")) %>%
++   arrange(PERIODO) %>%
++   mutate(anio = year(PERIODO), mes = month(PERIODO)) %>%
++   group_by(anio) %>%
++   mutate(
++     MF_flow  = MF_ACUM      - lag(MF_ACUM,      default = 0),
++     COM_flow = COM_COB_ACUM - lag(COM_COB_ACUM, default = 0),
++     MF_q     = MF_flow  / ACTIVOS_TOT * 100,
++     COM_q    = COM_flow / ACTIVOS_TOT * 100
++   ) %>%
++   ungroup()
+> # Unir a datos (mensual) por PERIODO
+> datos_desg <- datos %>%
++   filter(PERIODO <= as.Date("2016-09-30")) %>%
++   left_join(
++     hoja1 %>% select(PERIODO, MF_q, COM_q),
++     by = "PERIODO"
++   ) %>%
++   filter(!is.na(MF_q), !is.na(COM_q), MF_q > 0, COM_q > 0) %>%
++   mutate(
++     ln_MF    = log(MF_q),
++     ln_COM   = log(COM_q),
++     d_ln_MF  = c(NA, diff(ln_MF)),
++     d_ln_COM = c(NA, diff(ln_COM))
++   )
+> modelo_desg <- lm(d_ln_FBKF ~ d_ln_CARTERA + d_ln_CONCENT + d_ln_MF + d_ln_COM,
++                   data = datos_desg)
+Error en lm.fit(x, y, offset = offset, singular.ok = singular.ok, ...): 
+  0 (non-NA) cases
+
+> cat("\n=== ROBUSTEZ 2001–2016: DESGLOSE MARGEN vs COMISIONES ===\n")
+
+=== ROBUSTEZ 2001–2016: DESGLOSE MARGEN vs COMISIONES ===
+> print(summary(modelo_desg))
+Error en h(simpleError(msg, call)): 
+  error al evaluar el argumento 'object' al seleccionar un método para la función 'summary': objeto 'modelo_desg' no encontrado
+
+> cat("\nNewey-West desglose:\n")
+
+Newey-West desglose:
+> print(coeftest(modelo_desg, vcov = NeweyWest(modelo_desg, lag = 4, prewhite = FALSE)))
+Error: objeto 'modelo_desg' no encontrado
+
+> # 12A. Modelo dinámico: MARGEN_PAR rezagado (¿hay efecto con retardo?)
+> datos <- datos %>%
++   mutate(
++     L_d_ln_MARGEN_PAR = dplyr::lag(d_ln_MARGEN_PAR, 1),
++     L_d_ln_CONCENT    = dplyr::lag(d_ln_CONCENT, 1),
++     L_d_ln_CARTERA    = dplyr::lag(d_ln_CARTERA, 1)
++   )
+> modelo_rezago <- lm(d_ln_FBKF ~ d_ln_CARTERA + d_ln_CONCENT + d_ln_MARGEN_PAR +
++                       L_d_ln_CARTERA + L_d_ln_CONCENT + L_d_ln_MARGEN_PAR,
++                     data = datos)
+> cat("\n=== 12A. MODELO CON REZAGOS (dinámica) ===\n")
+
+=== 12A. MODELO CON REZAGOS (dinámica) ===
+> print(summary(modelo_rezago))
+
+Call:
+lm(formula = d_ln_FBKF ~ d_ln_CARTERA + d_ln_CONCENT + d_ln_MARGEN_PAR + 
+    L_d_ln_CARTERA + L_d_ln_CONCENT + L_d_ln_MARGEN_PAR, data = datos)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.266444 -0.008223  0.000300  0.009466  0.101926 
+
+Coefficients:
+                   Estimate Std. Error t value Pr(>|t|)    
+(Intercept)        0.001340   0.001466   0.914   0.3615    
+d_ln_CARTERA       0.089230   0.073016   1.222   0.2226    
+d_ln_CONCENT      -0.014140   0.128135  -0.110   0.9122    
+d_ln_MARGEN_PAR    0.015670   0.001983   7.902 5.31e-14 ***
+L_d_ln_CARTERA     0.162489   0.073850   2.200   0.0286 *  
+L_d_ln_CONCENT     0.231586   0.128642   1.800   0.0728 .  
+L_d_ln_MARGEN_PAR  0.014404   0.001956   7.364 1.74e-12 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.02503 on 299 degrees of freedom
+  (2 observations deleted due to missingness)
+Multiple R-squared:  0.2971,	Adjusted R-squared:  0.283 
+F-statistic: 21.07 on 6 and 299 DF,  p-value: < 2.2e-16
+
+> cat("\nNewey-West con rezagos:\n")
+
+Newey-West con rezagos:
+> print(coeftest(modelo_rezago, vcov = NeweyWest(modelo_rezago, lag = 4, prewhite = FALSE)))
+
+t test of coefficients:
+
+                    Estimate Std. Error t value  Pr(>|t|)    
+(Intercept)        0.0013400  0.0020042  0.6686  0.504274    
+d_ln_CARTERA       0.0892303  0.1296219  0.6884  0.491742    
+d_ln_CONCENT      -0.0141402  0.1024166 -0.1381  0.890282    
+d_ln_MARGEN_PAR    0.0156704  0.0051851  3.0222  0.002727 ** 
+L_d_ln_CARTERA     0.1624893  0.1027207  1.5819  0.114740    
+L_d_ln_CONCENT     0.2315856  0.1203455  1.9243  0.055261 .  
+L_d_ln_MARGEN_PAR  0.0144036  0.0017891  8.0507 1.965e-14 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+> # 12B. Modelo con tendencia determinista (controla drift)
+> datos <- datos %>% mutate(t = row_number())
+> modelo_trend <- lm(d_ln_FBKF ~ d_ln_CARTERA + d_ln_CONCENT + d_ln_MARGEN_PAR + t,
++                    data = datos)
+> cat("\n=== 12B. MODELO CON TENDENCIA DETERMINISTA ===\n")
+
+=== 12B. MODELO CON TENDENCIA DETERMINISTA ===
+> print(summary(modelo_trend))
+
+Call:
+lm(formula = d_ln_FBKF ~ d_ln_CARTERA + d_ln_CONCENT + d_ln_MARGEN_PAR + 
+    t, data = datos)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.271133 -0.005542  0.002604  0.011866  0.101485 
+
+Coefficients:
+                  Estimate Std. Error t value Pr(>|t|)    
+(Intercept)      6.903e-04  3.342e-03   0.207   0.8365    
+d_ln_CARTERA     1.583e-01  7.722e-02   2.051   0.0412 *  
+d_ln_CONCENT    -4.015e-02  1.424e-01  -0.282   0.7781    
+d_ln_MARGEN_PAR  1.355e-02  2.123e-03   6.382 6.56e-10 ***
+t                5.870e-06  1.849e-05   0.317   0.7511    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.02775 on 302 degrees of freedom
+  (1 observation deleted due to missingness)
+Multiple R-squared:  0.1331,	Adjusted R-squared:  0.1216 
+F-statistic: 11.59 on 4 and 302 DF,  p-value: 9.03e-09
+
+> cat("\nNewey-West con tendencia:\n")
+
+Newey-West con tendencia:
+> print(coeftest(modelo_trend, vcov = NeweyWest(modelo_trend, lag = 4, prewhite = FALSE)))
+
+t test of coefficients:
+
+                   Estimate  Std. Error t value Pr(>|t|)   
+(Intercept)      6.9034e-04  4.8164e-03  0.1433 0.886125   
+d_ln_CARTERA     1.5835e-01  1.5536e-01  1.0192 0.308902   
+d_ln_CONCENT    -4.0153e-02  9.9873e-02 -0.4020 0.687940   
+d_ln_MARGEN_PAR  1.3550e-02  4.9882e-03  2.7165 0.006978 **
+t                5.8699e-06  2.2415e-05  0.2619 0.793593   
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+> # 12C. Modelo con dummies estacionales (mes)
+> datos <- datos %>% mutate(mes = factor(month(PERIODO)))
+> modelo_estac <- lm(d_ln_FBKF ~ d_ln_CARTERA + d_ln_CONCENT + d_ln_MARGEN_PAR + mes,
++                    data = datos)
+> cat("\n=== 12C. MODELO CON ESTACIONALIDAD (dummies mensuales) ===\n")
+
+=== 12C. MODELO CON ESTACIONALIDAD (dummies mensuales) ===
+> print(summary(modelo_estac))
+
+Call:
+lm(formula = d_ln_FBKF ~ d_ln_CARTERA + d_ln_CONCENT + d_ln_MARGEN_PAR + 
+    mes, data = datos)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.261343 -0.007694 -0.000065  0.008338  0.103595 
+
+Coefficients:
+                Estimate Std. Error t value Pr(>|t|)  
+(Intercept)      0.32191    0.16030   2.008   0.0455 *
+d_ln_CARTERA     0.14309    0.07104   2.014   0.0449 *
+d_ln_CONCENT    -0.11334    0.13060  -0.868   0.3862  
+d_ln_MARGEN_PAR  0.14714    0.06547   2.247   0.0254 *
+mes2            -0.44521    0.20369  -2.186   0.0296 *
+mes3            -0.36207    0.18733  -1.933   0.0542 .
+mes4            -0.36035    0.17884  -2.015   0.0448 *
+mes5            -0.34934    0.17439  -2.003   0.0461 *
+mes6            -0.34534    0.17245  -2.003   0.0461 *
+mes7            -0.33974    0.17074  -1.990   0.0475 *
+mes8            -0.33223    0.16889  -1.967   0.0501 .
+mes9            -0.33574    0.16808  -1.997   0.0467 *
+mes10           -0.32783    0.16706  -1.962   0.0507 .
+mes11           -0.32154    0.16589  -1.938   0.0536 .
+mes12           -0.32529    0.16756  -1.941   0.0532 .
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.02503 on 292 degrees of freedom
+  (1 observation deleted due to missingness)
+Multiple R-squared:  0.3177,	Adjusted R-squared:  0.2849 
+F-statistic:  9.71 on 14 and 292 DF,  p-value: < 2.2e-16
+
+> cat("\nNewey-West con estacionalidad:\n")
+
+Newey-West con estacionalidad:
+> print(coeftest(modelo_estac, vcov = NeweyWest(modelo_estac, lag = 4, prewhite = FALSE)))
+
+t test of coefficients:
+
+                 Estimate Std. Error t value Pr(>|t|)  
+(Intercept)      0.321914   0.192394  1.6732  0.09536 .
+d_ln_CARTERA     0.143087   0.126786  1.1286  0.26000  
+d_ln_CONCENT    -0.113342   0.097734 -1.1597  0.24712  
+d_ln_MARGEN_PAR  0.147136   0.081249  1.8109  0.07118 .
+mes2            -0.445206   0.246044 -1.8095  0.07141 .
+mes3            -0.362073   0.226420 -1.5991  0.11088  
+mes4            -0.360349   0.217074 -1.6600  0.09798 .
+mes5            -0.349345   0.210814 -1.6571  0.09857 .
+mes6            -0.345340   0.208542 -1.6560  0.09880 .
+mes7            -0.339744   0.206089 -1.6485  0.10032  
+mes8            -0.332229   0.203700 -1.6310  0.10397  
+mes9            -0.335737   0.202350 -1.6592  0.09815 .
+mes10           -0.327831   0.201014 -1.6309  0.10399  
+mes11           -0.321535   0.200490 -1.6037  0.10985  
+mes12           -0.325292   0.200527 -1.6222  0.10584  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+> # 12D. Modelo con interacción COVID (¿cambió la relación después de 2020?)
+> datos <- datos %>% mutate(D_covid = ifelse(PERIODO >= as.Date("2020-03-01"), 1, 0))
+> modelo_covid <- lm(d_ln_FBKF ~ d_ln_CARTERA + d_ln_CONCENT + d_ln_MARGEN_PAR +
++                      D_covid + d_ln_CONCENT:D_covid + d_ln_MARGEN_PAR:D_covid,
++                    data = datos)
+> cat("\n=== 12D. MODELO CON INTERACCIÓN COVID ===\n")
+
+=== 12D. MODELO CON INTERACCIÓN COVID ===
+> print(summary(modelo_covid))
+
+Call:
+lm(formula = d_ln_FBKF ~ d_ln_CARTERA + d_ln_CONCENT + d_ln_MARGEN_PAR + 
+    D_covid + d_ln_CONCENT:D_covid + d_ln_MARGEN_PAR:D_covid, 
+    data = datos)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.271733 -0.005695  0.002664  0.011856  0.101132 
+
+Coefficients:
+                          Estimate Std. Error t value Pr(>|t|)    
+(Intercept)              0.0015270  0.0018655   0.819   0.4137    
+d_ln_CARTERA             0.1522763  0.0758005   2.009   0.0454 *  
+d_ln_CONCENT            -0.0522929  0.1568977  -0.333   0.7391    
+d_ln_MARGEN_PAR          0.0135992  0.0024537   5.542 6.54e-08 ***
+D_covid                  0.0004471  0.0037053   0.121   0.9040    
+d_ln_CONCENT:D_covid     0.0419718  0.3780206   0.111   0.9117    
+d_ln_MARGEN_PAR:D_covid -0.0001009  0.0050083  -0.020   0.9839    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.02784 on 300 degrees of freedom
+  (1 observation deleted due to missingness)
+Multiple R-squared:  0.1329,	Adjusted R-squared:  0.1156 
+F-statistic: 7.664 on 6 and 300 DF,  p-value: 1.133e-07
+
+> cat("\nNewey-West con interacción COVID:\n")
+
+Newey-West con interacción COVID:
+> print(coeftest(modelo_covid, vcov = NeweyWest(modelo_covid, lag = 4, prewhite = FALSE)))
+
+t test of coefficients:
+
+                           Estimate  Std. Error t value Pr(>|t|)  
+(Intercept)              0.00152702  0.00234168  0.6521  0.51483  
+d_ln_CARTERA             0.15227634  0.14154482  1.0758  0.28287  
+d_ln_CONCENT            -0.05229290  0.10280193 -0.5087  0.61135  
+d_ln_MARGEN_PAR          0.01359923  0.00610622  2.2271  0.02668 *
+D_covid                  0.00044705  0.00384655  0.1162  0.90755  
+d_ln_CONCENT:D_covid     0.04197176  0.22082059  0.1901  0.84938  
+d_ln_MARGEN_PAR:D_covid -0.00010093  0.00963814 -0.0105  0.99165  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+> # ---------------- PASO 13: ACF/PACF ----------------
+> par(mfrow = c(2, 2))
+> acf(residuals(modelo),          main = "ACF — Modelo principal 2001–2026")
+> pacf(residuals(modelo),         main = "PACF — Modelo principal 2001–2026")
+> acf(residuals(modelo_sin_covid),main = "ACF — Sin COVID")
+> pacf(residuals(modelo_sin_covid),main = "PACF — Sin COVID")
+> par(mfrow = c(1, 1))
+> # ---------------- PASO 14: GRÁFICOS ----------------
+> # (a) Series en logaritmos
+> plot(datos$PERIODO, datos$ln_FBKF, type = "l", col = "blue",
++      xlab = "Fecha", ylab = "Logaritmo",
++      main = "Evolución de las variables (logaritmos, 2001–2026)")
+> lines(datos$PERIODO, datos$ln_CARTERA,    col = "red")
+> lines(datos$PERIODO, datos$ln_CONCENT,    col = "green")
+> lines(datos$PERIODO, datos$ln_MARGEN_PAR, col = "orange")
+> legend("topleft",
++        legend = c("ln(FBKF)","ln(CARTERA)","ln(CONCENT)","ln(MARGEN_PAR)"),
++        col = c("blue","red","green","orange"), lty = 1)
+> # (b) Residuos del modelo principal
+> par(mfrow = c(2, 2))
+> plot(modelo)
+> par(mfrow = c(1, 1))
+> # ---------------- FIN ----------------
+> cat("\n============================================================\n")
+
+============================================================
+> cat("MODELO PRINCIPAL: modelo (2001–2026)\n")
+MODELO PRINCIPAL: modelo (2001–2026)
+> cat("ROBUSTEZ: modelo_sin_covid, modelo_desg (2001–2016)\n")
+ROBUSTEZ: modelo_sin_covid, modelo_desg (2001–2016)
+> cat("============================================================\n")
+============================================================
+> # ---------------- PASO 14: GRÁFICOS ----------------
+> # (a) Series en logaritmos
+> plot(datos$PERIODO, datos$ln_FBKF, type = "l", col = "blue",
++      xlab = "Fecha", ylab = "Logaritmo",
++      main = "Evolución de las variables (logaritmos, 2001–2026)")
+> lines(datos$PERIODO, datos$ln_CARTERA,    col = "red")
+> lines(datos$PERIODO, datos$ln_CONCENT,    col = "green")
+> lines(datos$PERIODO, datos$ln_MARGEN_PAR, col = "orange")
+> legend("topleft",
++        legend = c("ln(FBKF)","ln(CARTERA)","ln(CONCENT)","ln(MARGEN_PAR)"),
++        col = c("blue","red","green","orange"), lty = 0.3)
+> # ---------------- PASO 14: GRÁFICOS ----------------
+> # (a) Series en logaritmos
+> plot(datos$PERIODO, datos$ln_FBKF, type = "l", col = "blue",
++      xlab = "Fecha", ylab = "Logaritmo",
++      main = "Evolución de las variables (logaritmos, 2001–2026)")
+> lines(datos$PERIODO, datos$ln_CARTERA,    col = "red")
+> lines(datos$PERIODO, datos$ln_CONCENT,    col = "green")
+> lines(datos$PERIODO, datos$ln_MARGEN_PAR, col = "orange")
+> 
